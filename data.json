@@ -1,0 +1,187 @@
+{
+  "selectedStream": "ENRICH",
+  "selectedCollege": "SHHO",
+  "exemptCHLT": false,
+  "exemptELTU": true,
+  "courses": {
+    "GESH1010": {
+      "checked": true,
+      "grade1": "B",
+      "grade2": ""
+    },
+    "UGFH1000": {
+      "checked": true,
+      "grade1": "B",
+      "grade2": ""
+    },
+    "UGFN1000": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "ELTU1001": {
+      "checked": false,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "ELTU1002": {
+      "checked": false,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "CHLT1001": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "CHLT1002": {
+      "checked": true,
+      "grade1": "B+",
+      "grade2": ""
+    },
+    "ELTU2019": {
+      "checked": true,
+      "grade1": "A-",
+      "grade2": ""
+    },
+    "ENGG1003": {
+      "checked": true,
+      "grade1": "PP",
+      "grade2": ""
+    },
+    "UGCP1001": {
+      "checked": true,
+      "grade1": "PP",
+      "grade2": ""
+    },
+    "UGCP1002": {
+      "checked": true,
+      "grade1": "PP",
+      "grade2": ""
+    },
+    "STAT1011": {
+      "checked": true,
+      "grade1": "B+",
+      "grade2": ""
+    },
+    "MATH1018": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH1058": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH1038": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH2018": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH2221": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH2048": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH2068": {
+      "checked": true,
+      "grade1": "A-",
+      "grade2": ""
+    },
+    "MATH2230": {
+      "checked": true,
+      "grade1": "A-",
+      "grade2": ""
+    },
+    "MATH2028": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH2058": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH2078": {
+      "checked": true,
+      "grade1": "A",
+      "grade2": ""
+    },
+    "MATH3270": {
+      "checked": true,
+      "grade1": "B+",
+      "grade2": ""
+    }
+  },
+  "ugeCoursesAdded": [
+    {
+      "id": 1786639436984,
+      "code": "UGEC1511",
+      "area": "UGEC",
+      "credits": 3,
+      "grade1": "B+",
+      "grade2": ""
+    },
+    {
+      "id": 1786639441027,
+      "code": "UGED1111",
+      "area": "UGED",
+      "credits": 2,
+      "grade1": "B+",
+      "grade2": ""
+    }
+  ],
+  "phedCoursesAdded": [
+    {
+      "id": 1786639451088,
+      "code": "PHED1031",
+      "credits": 1,
+      "grade1": "A-",
+      "grade2": ""
+    },
+    {
+      "id": 1786639454768,
+      "code": "PHED1033",
+      "credits": 1,
+      "grade1": "B+",
+      "grade2": ""
+    }
+  ],
+  "langCoursesAdded": [
+    {
+      "id": 1786639425524,
+      "code": "ELTU1005",
+      "credits": 1,
+      "grade1": "B+",
+      "grade2": ""
+    }
+  ],
+  "customCoursesAdded": [
+    {
+      "id": 1786639492144,
+      "code": "PHYS2401",
+      "credits": 3,
+      "grade1": "A",
+      "grade2": ""
+    },
+    {
+      "id": 1786639497270,
+      "code": "PHYS3440",
+      "credits": 2,
+      "grade1": "A",
+      "grade2": ""
+    }
+  ]
+}
