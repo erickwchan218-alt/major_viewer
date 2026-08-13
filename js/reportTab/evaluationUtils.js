@@ -161,9 +161,9 @@ export function evaluateGeneralEducation(courseManager, college) {
     const ugeDUnits = passedUge.filter(c => c.area === 'UGED').reduce((acc, c) => acc + (c.credits || 3), 0);
     const ugeTotalUnits = ugeAUnits + ugeCUnits + ugeDUnits;
 
-    const ugeAFulfilled = ugeAUnits >= 2;
-    const ugeCFulfilled = ugeCUnits >= 2;
-    const ugeDFulfilled = ugeDUnits >= 2;
+    const ugeaFulfilled = ugeAUnits >= 2;
+    const ugecFulfilled = ugeCUnits >= 2;
+    const ugedFulfilled = ugeDUnits >= 2;
 
     // Physical Education
     const phedList = toIterableArray(courseManager.phedCourses);
@@ -179,10 +179,10 @@ export function evaluateGeneralEducation(courseManager, college) {
             ugeAUnits,
             ugeCUnits,
             ugeDUnits,
-            ugeAFulfilled,
-            ugeCFulfilled,
-            ugeDFulfilled,
-            fulfilled: (ugeTotalUnits >= 7) && ugeAFulfilled && ugeCFulfilled && ugeDFulfilled,
+            ugeaFulfilled,
+            ugecFulfilled,
+            ugedFulfilled,
+            fulfilled: (ugeTotalUnits >= 7) && ugeaFulfilled && ugecFulfilled && ugedFulfilled,
             ugeaAllocated: passedUge.filter(c => c.area === 'UGEA').map(c => formatCode(c.code)).join(', ') || 'None',
             ugecAllocated: passedUge.filter(c => c.area === 'UGEC').map(c => formatCode(c.code)).join(', ') || 'None',
             ugedAllocated: passedUge.filter(c => c.area === 'UGED').map(c => formatCode(c.code)).join(', ') || 'None',
@@ -192,20 +192,80 @@ export function evaluateGeneralEducation(courseManager, college) {
     };
 }
 
+// js/reportTab/evaluationUtils.js
+
 export function evaluateLanguages(courseManager) {
-    const chltFulfilled = courseManager.exemptCHLT || (courseManager.isCoursePassed('CHLT1001') && courseManager.isCoursePassed('CHLT1002'));
-    const eltu1Passed = courseManager.exemptELTU || courseManager.isCoursePassed('ELTU1001') || courseManager.isCoursePassed('ELTU1002');
-    const eltu2Passed = courseManager.isCoursePassed('ELTU2018') || courseManager.isCoursePassed('ELTU2019');
-    const eltu3Passed = courseManager.isCoursePassed('ELTU3018') || courseManager.isCoursePassed('ELTU3019');
+    // -------------------------------------------------------------
+    // (a) Chinese Language (CHLT) - Standard 3 Units
+    // -------------------------------------------------------------
+    const chlt1Passed = courseManager.isCoursePassed('CHLT1001');
+    const chlt2Passed = courseManager.isCoursePassed('CHLT1002');
+    const chltFulfilled = Boolean(courseManager.exemptCHLT || (chlt1Passed && chlt2Passed));
+    
+    const chineseRequiredUnits = 3;
+    let chineseUnits = 0;
+
+    if (courseManager.exemptCHLT) {
+        chineseUnits = 3;
+    } else {
+        if (chlt1Passed) chineseUnits += (courseManager.getCourseCredits ? courseManager.getCourseCredits('CHLT1001') : 1.5);
+        if (chlt2Passed) chineseUnits += (courseManager.getCourseCredits ? courseManager.getCourseCredits('CHLT1002') : 1.5);
+    }
+
+    // -------------------------------------------------------------
+    // (b) English Language (ELTU) - Standard 9 Units (3 Tiers x 3 Units)
+    // -------------------------------------------------------------
+    const eltu1Passed = Boolean(courseManager.exemptELTU || courseManager.isCoursePassed('ELTU1001') || courseManager.isCoursePassed('ELTU1002'));
+    const eltu2Passed = Boolean(courseManager.isCoursePassed('ELTU2018') || courseManager.isCoursePassed('ELTU2019'));
+    const eltu3Passed = Boolean(courseManager.isCoursePassed('ELTU3018') || courseManager.isCoursePassed('ELTU3019'));
     const eltuFulfilled = eltu1Passed && eltu2Passed && eltu3Passed;
 
+    const englishRequiredUnits = 9;
+    let englishUnits = 0;
+
+    if (eltu1Passed) englishUnits += 3;
+    if (eltu2Passed) englishUnits += 3;
+    if (eltu3Passed) englishUnits += 3;
+
+    // -------------------------------------------------------------
+    // (c) Language Enhancement Course (Lang Debt)
+    // -------------------------------------------------------------
     const langDebt = typeof courseManager.getLangDebt === 'function' ? courseManager.getLangDebt() : 0;
     const langList = toIterableArray(courseManager.langCourses);
-    const langDebtUnitsCompleted = langList.filter(c => courseManager.isCustomCoursePassed ? courseManager.isCustomCoursePassed(c) : c.passed).reduce((acc, c) => acc + (c.credits || 3), 0);
+    const langDebtUnitsCompleted = langList
+        .filter(c => courseManager.isCustomCoursePassed ? courseManager.isCustomCoursePassed(c) : c.passed)
+        .reduce((acc, c) => acc + (c.credits || 3), 0);
     const langDebtFulfilled = langDebtUnitsCompleted >= langDebt;
 
+    const enhancementRequiredUnits = langDebt;
+    const enhancementUnits = langDebtUnitsCompleted;
+
+    // -------------------------------------------------------------
+    // Section Totals
+    // -------------------------------------------------------------
+    const totalUnits = chineseUnits + englishUnits + enhancementUnits;
+    const totalRequiredUnits = chineseRequiredUnits + englishRequiredUnits + enhancementRequiredUnits;
+    const fulfilled = chltFulfilled && eltuFulfilled && langDebtFulfilled;
+
     return {
-        fulfilled: chltFulfilled && eltuFulfilled && langDebtFulfilled,
+        fulfilled,
+        totalUnits,
+        totalRequiredUnits,
+        chinese: {
+            units: chineseUnits,
+            requiredUnits: chineseRequiredUnits,
+            fulfilled: chltFulfilled
+        },
+        english: {
+            units: englishUnits,
+            requiredUnits: englishRequiredUnits,
+            fulfilled: eltuFulfilled
+        },
+        enhancement: {
+            units: enhancementUnits,
+            requiredUnits: enhancementRequiredUnits,
+            fulfilled: langDebtFulfilled
+        },
         chltReportText: getChltReportText(courseManager),
         eltuReportText: getEltuReportText(courseManager),
         langReportText: getLangReportText(courseManager)

@@ -671,3 +671,8 @@ th {
 .requirement-text .text-right {
   text-align: right !important;
 }
+
+#progress-table-body td,
+#progress-table-body tr {
+    border: none !important;
+}
