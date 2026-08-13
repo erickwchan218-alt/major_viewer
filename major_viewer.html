@@ -1,0 +1,437 @@
+<!-- major_viewer.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Major Requirement Viewer</title>
+  <link rel="stylesheet" href="css/styles.css">
+  
+  <script type="module" src="js/constants.js" defer></script>
+  
+  
+  <!-- Report Tab -->
+  <script type="module" src="js/reportTab/reportGeneration.js"></script>
+  <script type="module" src="js/reportTab/evaluateRequirements.js"></script>
+  
+  <!-- Debug Tab -->
+  <script type="module" src="js/debugTab/debugArea.js"></script>
+  
+  <script type="module" src="js/script.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header-row">
+    <div>
+      <h1>Major Requirement Viewer</h1>
+      <p style="color: #64748b;">Select your stream, college, and completed courses to evaluate progress.</p>
+    </div>
+    <label class="dev-toggle-container">
+      <input type="checkbox" id="dev-mode-toggle" onchange="toggleDevMode()">
+      <span>Developer Mode</span>
+    </label>
+  </div>
+
+  <!-- Uppermost Action Buttons: Evaluate & Reset -->
+  <div class="top-actions">
+    <button type="button" class="btn-evaluate" onclick="evaluateRequirements(true)">Evaluate Progress</button>
+    <button type="button" class="btn-reset" onclick="resetAll()">Reset</button>
+  </div>
+
+  <!-- Tab Navigation Controls -->
+  <div class="tab-nav">
+    <button type="button" class="tab-btn active" id="tab-btn-input" onclick="switchTab('input')">Course Input</button>
+    <button type="button" class="tab-btn" id="tab-btn-report" onclick="switchTab('report')">Report</button>
+    <button type="button" class="tab-btn" id="tab-btn-debug" style="display:none;" onclick="switchTab('debug')">Debug</button>
+  </div>
+
+  <!-- Tab 1: Course Input -->
+  <div id="tab-content-input" class="tab-content active">
+    <div class="card">
+      <h2>1. Stream & College Selection</h2>
+      
+      <div class="selection-grid-container">
+        <div class="select-box">
+          <label for="stream-select">Select Specialization Stream:</label>
+          <select id="stream-select" onchange="onStreamChange()">
+            <option value="ENRICH">Enrichment Stream</option>
+            <option value="CAM">Computational and Applied Mathematics Stream</option>
+            <option value="CBDA">Computational Big Data Analytics Stream</option>
+            <option value="MATH_STREAM">Mathematics Stream</option>
+            <option value="MATH_EDU">Mathematics-Education Stream</option>
+            <option value="MULTI">Mathematics-Multidisciplinary Stream</option>
+            <option value="EMATH_CAM">EMath + CAM (Enrichment + Computational Applied Math)</option>
+          </select>
+        </div>
+
+        <div class="select-box">
+          <label for="college-select">Select College:</label>
+          <select id="college-select" onchange="onCollegeChange()">
+            <option value="CC">Chung Chi College</option>
+            <option value="NA">New Asia College</option>
+            <option value="UC">United College</option>
+            <option value="SHAW">Shaw College</option>
+            <option value="MC">Morningside College</option>
+            <option value="SHHO">S.H. Ho College</option>
+            <option value="CWC">CW Chu College</option>
+            <option value="WYS">Wu Yee Sun College</option>
+            <option value="LWS">Lee Woo Sing College</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="expand-collapse-btns">
+        <button type="button" class="btn-small" onclick="toggleAllCategories(true)">Expand All</button>
+        <button type="button" class="btn-small" onclick="toggleAllCategories(false)">Collapse All</button>
+      </div>
+
+      <!-- Category: College GE Requirement -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>College GE Requirement (6 Units)</span>
+          <span class="selected-badge" id="count-ge-college">0 selected</span>
+        </summary>
+        <div class="category-content" id="college-ge-content">
+          <!-- Dynamically filled based on selected college -->
+        </div>
+      </details>
+
+      <!-- Category: University GE Foundation -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>University GE Foundation Programme</span>
+          <span class="selected-badge" id="count-ge-foundation">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="ge-foundation-grid"></div>
+        </div>
+      </details>
+
+      <!-- Category: Chinese Language & English Language -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>Chinese Language & English Language</span>
+          <span class="selected-badge" id="count-chlt-eltu">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div style="background: #eff6ff; padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bfdbfe;">
+            <div style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; font-size: 0.95rem;">Language Exemptions</div>
+            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                <input type="checkbox" id="chk-exempt-chlt" onchange="onExemptionChange()"> Exempt CHLT1001 & 1002
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                <input type="checkbox" id="chk-exempt-eltu" onchange="onExemptionChange()"> Exempt ELTU 1001/1002
+              </label>
+            </div>
+            <div id="debt-info-box" style="margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #1e3a8a;">
+              Language Enhancement Course units: 0 units required
+            </div>
+          </div>
+
+          <div class="checkbox-grid" id="chlt-eltu-grid"></div>
+
+          <!-- Language Enhancement Custom Course Adder (When Debt > 0) -->
+          <div id="lang-adder-section" style="margin-top: 1.25rem; display: none;">
+            <h3 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+              Language Enhancement Course Custom Adder (To fulfill debt requirement)
+            </h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem;">
+              Allowed course areas: CHLT, CLCE, CLCP, ELTU, ENGE, TRAN, CURE, JASP, ARAB, FREN, GERM, ITAL, KORE, RUSS, SPAN, THAI, HKSL.
+            </p>
+
+            <div class="custom-adder-box" id="lang-adder-container">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Course Code</th>
+                  <th>Units</th>
+                  <th>Grade</th>
+                  <th>2nd Grade (Retake)</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="lang-courses-tbody">
+                <tr><td colspan="6" style="text-align:center; color:#94a3b8;">No Language Enhancement courses added.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <!-- Category: Digital Literacy and Computational Thinking Course (UGEX) -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>Digital Literacy and Computational Thinking Course</span>
+          <span class="selected-badge" id="count-digital-literacy">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="digital-literacy-grid"></div>
+        </div>
+      </details>
+
+      <!-- Category: UGCP Area -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>UGCP Area</span>
+          <span class="selected-badge" id="count-ugcp">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="ugcp-grid"></div>
+        </div>
+      </details>
+
+      <!-- Category: University GE 4-Area Custom Adder -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>University GE 4-Area Courses (UGEA, UGEC, UGED)</span>
+          <span class="selected-badge" id="count-ge-areas">0 courses</span>
+        </summary>
+        <div class="category-content">
+          <p style="font-size:0.85rem; color:#b45309; margin-bottom:0.75rem; font-weight:600;">
+            Note for Mathematics Major: Area B (UGEB) courses CANNOT be used to fulfill GE requirements. Only Area A (UGEA), Area C (UGEC), and Area D (UGED) are counted (Minimum 7 units total, with at least one course in each of Area A, C, and D).
+          </p>
+
+          <div class="custom-adder-box" id="uge-adder-container">
+            <!-- Rendered dynamically by generateCustomAdderTemplate -->
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Course Code</th>
+                <th>Area</th>
+                <th>Units</th>
+                <th>Grade</th>
+                <th>2nd Grade (Retake)</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="uge-courses-tbody">
+              <tr><td colspan="7" style="text-align:center; color:#94a3b8;">No 4-Area GE courses added.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <!-- Category: Physical Education -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>Physical Education</span>
+          <span class="selected-badge" id="count-phed">0 courses</span>
+        </summary>
+        <div class="category-content">
+          <p style="font-size:0.85rem; color:#1e3a8a; margin-bottom:0.75rem; font-weight:600;">
+            Physical Education Requirement: Enter PHED course codes (e.g., PHED1001). All courses are fixed at 1 unit and accept letter grades only.
+          </p>
+
+          <div class="custom-adder-box" id="phed-adder-container">
+            <!-- Rendered dynamically by renderPhedAdderContainer -->
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Course Code</th>
+                <th>Units</th>
+                <th>Grade</th>
+                <th>2nd Grade (Retake)</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="phed-courses-tbody">
+              <tr><td colspan="6" style="text-align:center; color:#94a3b8;">No PHED courses added.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <!-- Category: Faculty Package Courses (Modified Layout & Structure) -->
+      <details class="category-details" open>
+        <summary class="category-title">
+          <span>Faculty Package Courses</span>
+          <span class="selected-badge" id="count-faculty">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <p style="font-size:0.85rem; color:#1e3a8a; margin-bottom:0.75rem; font-weight:600;">
+            Faculty Package Requirement: STAT1011 is REQUIRED, plus at least 1 course from LSCI / CHEM / PHYS options below.
+          </p>
+          
+          <div style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; font-size: 0.95rem;">1. Required Course:</div>
+          <div class="checkbox-grid" id="faculty-req-grid" style="margin-bottom: 1rem;"></div>
+
+          <div style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; font-size: 0.95rem;">2. Elective Course (Select at least 1):</div>
+          <div class="checkbox-grid" id="faculty-elec-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH 1xxx</span>
+          <span class="selected-badge" id="count-math1">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math1-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH 2xxx</span>
+          <span class="selected-badge" id="count-math2">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math2-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH30xx (Pure)</span>
+          <span class="selected-badge" id="count-math3-pure">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math3-pure-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH32xx & 33xx (Applied)</span>
+          <span class="selected-badge" id="count-math3-app">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math3-app-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH40xx (Pure)</span>
+          <span class="selected-badge" id="count-math4-pure">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math4-pure-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH42xx (Applied)</span>
+          <span class="selected-badge" id="count-math4-app">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math4-app-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH4400/4900 (FYP)</span>
+          <span class="selected-badge" id="count-math-fyp">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math-fyp-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>MATH 5xxx (Graduate Level)</span>
+          <span class="selected-badge" id="count-math5">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="math5-grid"></div>
+        </div>
+      </details>
+
+      <details class="category-details">
+        <summary class="category-title">
+          <span>Other Required & Elective Non-MATH Courses</span>
+          <span class="selected-badge" id="count-other">0 selected</span>
+        </summary>
+        <div class="category-content">
+          <div class="checkbox-grid" id="other-grid"></div>
+        </div>
+      </details>
+
+      <!-- Generic Custom Elective Courses Card -->
+      <div class="card custom-courses-card" id="custom-courses-card" style="margin-top:1.5rem;">
+        <h2 style="color: #15803d; border-bottom-color: #dcfce7;">Custom Elective Course</h2>
+        <p style="font-size: 0.85rem; color: #166534; margin-bottom: 0.75rem;">
+          Add non-listed elective courses from valid prefixes (e.g., ECON, PHYS, CSCI, SEEM). These will be included in GPA calculations and stream elective fulfillment where applicable.
+        </p>
+        
+        <div id="custom-adder-container">
+          <!-- Rendered dynamically by generateCustomAdderTemplate -->
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Course Code</th>
+              <th>Units</th>
+              <th>Grade</th>
+              <th>2nd Grade (Retake)</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="custom-courses-tbody">
+            <tr><td colspan="6" style="text-align:center; color:#94a3b8;">No custom elective courses added.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Report -->
+  <div id="tab-content-report" class="tab-content">
+    <div class="results-section" id="results-section">
+      <div class="card">
+        <h2>2. Evaluation Progress Summary</h2>
+        <div id="overall-summary-box" class="overall-summary"></div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Requirement Area</th>
+              <th>Units Completed</th>
+              <th>Required Minimum</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="progress-table-body">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>3. Curriculum Requirement Specification (Completed Courses Highlighted)</h2>
+        <div class="requirement-text" id="highlighted-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Debug -->
+  <div id="tab-content-debug" class="tab-content">
+    <div class="card debug-card" id="dev-debug-card">
+      <h2>Developer Debug Output (JSON)</h2>
+      <div class="debug-actions">
+        <button type="button" class="btn-load" onclick="loadJsonSettings()">Load</button>
+      </div>
+      <textarea id="json-debug-textarea" placeholder="Paste or edit JSON settings here..."></textarea>
+    </div>
+  </div>
+</div>
+</body>
+</html>
