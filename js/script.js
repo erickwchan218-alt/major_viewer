@@ -6,410 +6,52 @@ import {
   GRADE_OPTIONS, 
   LETTER_GRADE_OPTIONS, 
   PASS_FAIL_GRADE_OPTIONS, 
-  coursesData, 
-  streamDescriptions 
+  coursesData
 } from './constants.js';
 
 import { toggleDevMode, loadJsonSettings, resetAll } from './debugTab/debugArea.js';
+
 import { getCollegeGeReportText } from './reportTab/reportGeneration.js';
 import { evaluateRequirements } from './reportTab/evaluateRequirements.js';
 
+import { generateCustomAdderTemplate, onGrade1ChangeGeneric } from './handlers/customAdderHandler.js';
+
+import {
+  renderPhedAdderContainer,
+  onGrade1ChangePhed,
+  addPhedCourse,
+  removePhedCourse,
+  updatePhedCourseGrade,
+  renderPhedCoursesTable
+} from './handlers/phedHandler.js';
+
+import {
+  addLangCourse,
+  removeLangCourse,
+  updateLangCourseGrade,
+  updateLangCourseCredits,
+  renderLangCoursesTable,
+  onExemptionChange
+} from './handlers/langHandler.js';
+
+import {
+  addUgeCourse,
+  removeUgeCourse,
+  updateUgeCourseGrade,
+  updateUgeCourseCredits,
+  renderUgeCoursesTable
+} from './handlers/ugeHandler.js';
+
+import {
+  addCustomCourse,
+  removeCustomCourse,
+  updateCustomCourseGrade,
+  updateCustomCourseCredits,
+  renderCustomCoursesTable
+} from './handlers/customHandler.js';
+
 const courseManager = new CourseManager();
 window.courseManager = courseManager;
-
-// --- Helper Functions for Custom Adders ---
-
-function generateCustomAdderTemplate(containerId, options = {}) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const { idPrefix = 'custom', isUge = false, isLang = false } = options;
-
-  let flexFields = '';
-  if (isUge) {
-    flexFields = `
-      <div class="field-group">
-        <label for="${idPrefix}-area">Area</label>
-        <select id="${idPrefix}-area">
-          <option value="UGEA">Area A (UGEA)</option>
-          <option value="UGEB">Area B (UGEB) [Excluded]</option>
-          <option value="UGEC">Area C (UGEC)</option>
-          <option value="UGED">Area D (UGED)</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="${idPrefix}-code-num">Code (number)</label>
-        <input type="text" id="${idPrefix}-code-num" placeholder="e.g. 1110" style="width: 100px;">
-      </div>
-    `;
-  } else {
-    flexFields = `
-      <div class="field-group">
-        <label for="${idPrefix}-code">Course Code</label>
-        <input type="text" id="${idPrefix}-code" placeholder="${isLang ? 'e.g. TRAN1001' : 'e.g. ECON2011'}" style="text-transform:uppercase;">
-      </div>
-    `;
-  }
-
-  const optionsForG1 = isUge ? LETTER_GRADE_OPTIONS : GRADE_OPTIONS;
-  const gradeOptionsHtml = optionsForG1.map(g => `<option value="${g}">${g}</option>`).join('');
-
-  let addFn = 'addCustomCourse()';
-  if (isUge) addFn = 'addUgeCourse()';
-  if (isLang) addFn = 'addLangCourse()';
-
-  container.innerHTML = `
-    <div class="custom-form">
-      ${flexFields}
-      <div class="field-group">
-        <label for="${idPrefix}-credits">Units</label>
-        <input type="number" id="${idPrefix}-credits" value="3" min="1" max="6" style="width: 70px;">
-      </div>
-      <div class="field-group">
-        <label id="${idPrefix}-g1-label" for="${idPrefix}-grade1">Grade</label>
-        <select id="${idPrefix}-grade1" onchange="onGrade1ChangeGeneric('${idPrefix}')">
-          ${gradeOptionsHtml}
-        </select>
-      </div>
-      <div class="field-group" id="${idPrefix}-retake-group" style="display:none;">
-        <label for="${idPrefix}-grade2" style="color: var(--danger);">2nd Grade</label>
-        <select id="${idPrefix}-grade2">
-          <option value="">--Select--</option>
-          ${gradeOptionsHtml}
-        </select>
-      </div>
-      <button type="button" class="btn-add" onclick="${addFn}">+ Add Course</button>
-    </div>
-    <div class="custom-error" id="${idPrefix}-error"></div>
-  `;
-}
-
-function onGrade1ChangeGeneric(idPrefix) {
-  const g1 = document.getElementById(`${idPrefix}-grade1`).value;
-  const retakeGrp = document.getElementById(`${idPrefix}-retake-group`);
-  const label1 = document.getElementById(`${idPrefix}-g1-label`);
-  const isFail = (g1 === 'F' || g1 === 'FF');
-  if (label1) label1.textContent = isFail ? "1st Grade" : "Grade";
-  if (retakeGrp) {
-    retakeGrp.style.display = isFail ? 'flex' : 'none';
-    if (!isFail) document.getElementById(`${idPrefix}-grade2`).value = '';
-  }
-}
-
-// --- Physical Education (PHED) Handlers ---
-
-function renderPhedAdderContainer() {
-  const container = document.getElementById("phed-adder-container");
-  if (!container) return;
-
-  const gradeOptionsHtml = LETTER_GRADE_OPTIONS.map(g => `<option value="${g}">${g}</option>`).join('');
-
-  container.innerHTML = `
-    <div class="custom-form">
-      <div class="field-group">
-        <label for="phed-area">Area</label>
-        <input type="text" id="phed-area" value="PHED" readonly style="width: 75px; background: #e2e8f0; color: #475569; font-weight: 600; cursor: not-allowed; text-align: center;">
-      </div>
-      <div class="field-group">
-        <label for="phed-code-num">Course Number</label>
-        <input type="text" id="phed-code-num" placeholder="e.g. 1001" maxlength="4" style="width: 100px;">
-      </div>
-      <div class="field-group">
-        <label for="phed-credits">Units</label>
-        <input type="number" id="phed-credits" value="1" readonly style="width: 70px; background: #e2e8f0; color: #475569; cursor: not-allowed; text-align: center;">
-      </div>
-      <div class="field-group">
-        <label id="phed-g1-label" for="phed-grade1">Grade</label>
-        <select id="phed-grade1" onchange="onGrade1ChangePhed()">
-          ${gradeOptionsHtml}
-        </select>
-      </div>
-      <div class="field-group" id="phed-retake-group" style="display:none;">
-        <label for="phed-grade2" style="color: var(--danger);">2nd Grade</label>
-        <select id="phed-grade2">
-          <option value="">--Select--</option>
-          ${gradeOptionsHtml}
-        </select>
-      </div>
-      <button type="button" class="btn-add" onclick="addPhedCourse()">+ Add Course</button>
-    </div>
-    <div class="custom-error" id="phed-error"></div>
-  `;
-}
-
-function onGrade1ChangePhed() {
-  const g1 = document.getElementById("phed-grade1").value;
-  const retakeGrp = document.getElementById("phed-retake-group");
-  const label1 = document.getElementById("phed-g1-label");
-  const isFail = (g1 === 'F');
-  if (label1) label1.textContent = isFail ? "1st Grade" : "Grade";
-  if (retakeGrp) {
-    retakeGrp.style.display = isFail ? 'flex' : 'none';
-    if (!isFail) document.getElementById("phed-grade2").value = '';
-  }
-}
-
-function addPhedCourse() {
-  const codeNumInput = document.getElementById("phed-code-num");
-  const g1Select = document.getElementById("phed-grade1");
-  const g2Select = document.getElementById("phed-grade2");
-  const errBox = document.getElementById("phed-error");
-
-  errBox.style.display = "none";
-
-  if (!codeNumInput) return;
-
-  const rawNum = codeNumInput.value.trim();
-  if (!rawNum) {
-    errBox.textContent = "Please enter a course number.";
-    errBox.style.display = "block";
-    return;
-  }
-
-  // Prepend "PHED" if the user entered only digits
-  const fullCode = rawNum.toUpperCase().startsWith("PHED") ? rawNum.toUpperCase() : `PHED${rawNum}`;
-
-  const result = courseManager.addPhedCourse(fullCode, g1Select.value, g2Select.value);
-
-  if (!result.success) {
-    errBox.textContent = result.error;
-    errBox.style.display = "block";
-    return;
-  }
-
-  codeNumInput.value = "";
-  g1Select.value = "A";
-  g2Select.value = "";
-  document.getElementById("phed-retake-group").style.display = "none";
-  if (document.getElementById("phed-g1-label")) {
-    document.getElementById("phed-g1-label").textContent = "Grade";
-  }
-
-  renderPhedCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function removePhedCourse(id) {
-  courseManager.removePhedCourse(id);
-  renderPhedCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function updatePhedCourseGrade(id, field, value) {
-  courseManager.updatePhedCourseGrade(id, field, value);
-  renderPhedCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function renderPhedCoursesTable() {
-  const tbody = document.getElementById("phed-courses-tbody");
-  if (!tbody) return;
-
-  if (courseManager.phedCourses.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">No PHED courses added.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = courseManager.phedCourses.map(c => {
-    const passed = courseManager.isCustomCoursePassed(c);
-    const isFail1 = (c.grade1 === 'F');
-    return `
-      <tr>
-        <td><strong>${c.code}</strong></td>
-        <td>1</td>
-        <td>
-          <select onchange="updatePhedCourseGrade(${c.id}, 'grade1', this.value)">
-            ${LETTER_GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade1 === g ? 'selected' : ''}>${g}</option>`).join('')}
-          </select>
-        </td>
-        <td>
-          ${isFail1 ? `
-            <select onchange="updatePhedCourseGrade(${c.id}, 'grade2', this.value)">
-              <option value="">--Select--</option>
-              ${LETTER_GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade2 === g ? 'selected' : ''}>${g}</option>`).join('')}
-            </select>
-          ` : '<span style="color:#94a3b8;">N/A</span>'}
-        </td>
-        <td>
-          ${passed ? '<span class="status-badge status-fulfilled">PASSED</span>' : '<span class="status-badge status-pending" style="background:#fee2e2;color:#991b1b;">FAILED</span>'}
-        </td>
-        <td>
-          <button type="button" class="btn-small" style="background:#fee2e2; color:#991b1b;" onclick="removePhedCourse(${c.id})">Remove</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-// --- Language Enhancement Debt Handlers ---
-
-function addLangCourse() {
-  const codeInput = document.getElementById("lang-code");
-  const creditsInput = document.getElementById("lang-credits");
-  const g1Select = document.getElementById("lang-grade1");
-  const g2Select = document.getElementById("lang-grade2");
-  const errBox = document.getElementById("lang-error");
-
-  errBox.style.display = "none";
-
-  const result = courseManager.addLangCourse(codeInput.value, creditsInput.value, g1Select.value, g2Select.value);
-  if (!result.success) {
-    errBox.textContent = result.error;
-    errBox.style.display = "block";
-    return;
-  }
-
-  codeInput.value = "";
-  g1Select.value = "A";
-  g2Select.value = "";
-  if (document.getElementById("lang-retake-group")) document.getElementById("lang-retake-group").style.display = "none";
-  if (document.getElementById("lang-g1-label")) document.getElementById("lang-g1-label").textContent = "Grade";
-
-  renderLangCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function removeLangCourse(id) {
-  courseManager.removeLangCourse(id);
-  renderLangCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function updateLangCourseGrade(id, field, value) {
-  courseManager.updateLangCourseGrade(id, field, value);
-  renderLangCoursesTable();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function updateLangCourseCredits(id, credits) {
-  courseManager.updateLangCourseCredits(id, credits);
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function renderLangCoursesTable() {
-  const tbody = document.getElementById("lang-courses-tbody");
-  if (!tbody) return;
-
-  if (courseManager.langCourses.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">No Language Enhancement courses added.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = courseManager.langCourses.map(c => {
-    const passed = courseManager.isCustomCoursePassed(c);
-    const isFail1 = (c.grade1 === 'F' || c.grade1 === 'FF');
-    return `
-      <tr>
-        <td><strong>${c.code}</strong></td>
-        <td>
-          <input type="number" min="1" max="6" value="${c.credits}" style="width:55px; padding:0.2rem 0.4rem; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateLangCourseCredits(${c.id}, this.value)">
-        </td>
-        <td>
-          <select onchange="updateLangCourseGrade(${c.id}, 'grade1', this.value)">
-            ${GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade1 === g ? 'selected' : ''}>${g}</option>`).join('')}
-          </select>
-        </td>
-        <td>
-          ${isFail1 ? `
-            <select onchange="updateLangCourseGrade(${c.id}, 'grade2', this.value)">
-              <option value="">--Select--</option>
-              ${GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade2 === g ? 'selected' : ''}>${g}</option>`).join('')}
-            </select>
-          ` : '<span style="color:#94a3b8;">N/A</span>'}
-        </td>
-        <td>
-          ${passed ? '<span class="status-badge status-fulfilled">PASSED</span>' : '<span class="status-badge status-pending" style="background:#fee2e2;color:#991b1b;">FAILED</span>'}
-        </td>
-        <td>
-          <button type="button" class="btn-small" style="background:#fee2e2; color:#991b1b;" onclick="removeLangCourse(${c.id})">Remove</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function onExemptionChange() {
-  const exemptCHLT = document.getElementById("chk-exempt-chlt")?.checked || false;
-  const exemptELTU = document.getElementById("chk-exempt-eltu")?.checked || false;
-
-  courseManager.setExemptions(exemptCHLT, exemptELTU);
-  const debt = courseManager.getLangDebt();
-
-  const debtBox = document.getElementById("debt-info-box");
-  if (debtBox) {
-    debtBox.textContent = `Language Enhancement Course units: ${debt} unit${debt !== 1 ? 's' : ''} required`;
-    debtBox.style.color = debt > 0 ? "var(--warning)" : "var(--primary)";
-  }
-
-  ['CHLT1001', 'CHLT1002'].forEach(code => {
-    const chk = document.getElementById(`chk-${code}`);
-    const itemBox = document.getElementById(`item-box-${code}`);
-    if (chk && itemBox) {
-      if (exemptCHLT) {
-        chk.checked = false;
-        chk.disabled = true;
-        toggleItemCheck(code);
-        itemBox.style.opacity = '0.5';
-        itemBox.style.pointerEvents = 'none';
-        itemBox.style.backgroundColor = '#e2e8f0';
-      } else {
-        chk.disabled = false;
-        itemBox.style.opacity = '1';
-        itemBox.style.pointerEvents = 'auto';
-        itemBox.style.backgroundColor = '';
-      }
-    }
-  });
-
-  ['ELTU1001', 'ELTU1002'].forEach(code => {
-    const chk = document.getElementById(`chk-${code}`);
-    const itemBox = document.getElementById(`item-box-${code}`);
-    if (chk && itemBox) {
-      if (exemptELTU) {
-        chk.checked = false;
-        chk.disabled = true;
-        toggleItemCheck(code);
-        itemBox.style.opacity = '0.5';
-        itemBox.style.pointerEvents = 'none';
-        itemBox.style.backgroundColor = '#e2e8f0';
-      } else {
-        chk.disabled = false;
-        itemBox.style.opacity = '1';
-        itemBox.style.pointerEvents = 'auto';
-        itemBox.style.backgroundColor = '';
-      }
-    }
-  });
-
-  const langAdderSection = document.getElementById("lang-adder-section");
-  if (langAdderSection) {
-    langAdderSection.style.display = debt > 0 ? "block" : "none";
-  }
-
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
 
 // --- UI Rendering & Grid Creation ---
 
@@ -738,202 +380,7 @@ function onCollegeChange() {
   }
 }
 
-// --- 4-Area UGE & Custom Course Handlers ---
-
-function addUgeCourse() {
-  const areaSelect = document.getElementById("uge-area");
-  const codeNumInput = document.getElementById("uge-code-num");
-  const creditsInput = document.getElementById("uge-credits");
-  const g1Select = document.getElementById("uge-grade1");
-  const g2Select = document.getElementById("uge-grade2");
-  const errBox = document.getElementById("uge-error");
-
-  errBox.style.display = "none";
-  const result = courseManager.addUgeCourse(areaSelect.value, codeNumInput.value, creditsInput.value, g1Select.value, g2Select.value);
-
-  if (!result.success) {
-    errBox.textContent = result.error;
-    errBox.style.display = "block";
-    return;
-  }
-
-  codeNumInput.value = "";
-  g1Select.value = "A";
-  g2Select.value = "";
-  document.getElementById("uge-retake-group").style.display = "none";
-  if (document.getElementById("uge-g1-label")) document.getElementById("uge-g1-label").textContent = "Grade";
-
-  renderUgeCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function removeUgeCourse(id) {
-  courseManager.removeUgeCourse(id);
-  renderUgeCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function updateUgeCourseGrade(id, field, value) {
-  courseManager.updateUgeCourseGrade(id, field, value);
-  renderUgeCoursesTable();
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function updateUgeCourseCredits(id, credits) {
-  courseManager.updateUgeCourseCredits(id, credits);
-  updateCategoryCounts();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function renderUgeCoursesTable() {
-  const tbody = document.getElementById("uge-courses-tbody");
-  if (!tbody) return;
-
-  if (courseManager.ugeCourses.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">No 4-Area GE courses added.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = courseManager.ugeCourses.map(c => {
-    const passed = courseManager.isCustomCoursePassed(c);
-    const isFail1 = (c.grade1 === 'F' || c.grade1 === 'FF');
-    return `
-      <tr>
-        <td><strong>${c.code}</strong></td>
-        <td><span class="allocated-badge">${c.area}</span></td>
-        <td>
-          <input type="number" min="1" max="6" value="${c.credits}" style="width:55px; padding:0.2rem 0.4rem; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateUgeCourseCredits(${c.id}, this.value)">
-        </td>
-        <td>
-          <select onchange="updateUgeCourseGrade(${c.id}, 'grade1', this.value)">
-            ${LETTER_GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade1 === g ? 'selected' : ''}>${g}</option>`).join('')}
-          </select>
-        </td>
-        <td>
-          ${isFail1 ? `
-            <select onchange="updateUgeCourseGrade(${c.id}, 'grade2', this.value)">
-              <option value="">--Select--</option>
-              ${LETTER_GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade2 === g ? 'selected' : ''}>${g}</option>`).join('')}
-            </select>
-          ` : '<span style="color:#94a3b8;">N/A</span>'}
-        </td>
-        <td>
-          ${passed ? '<span class="status-badge status-fulfilled">PASSED</span>' : '<span class="status-badge status-pending" style="background:#fee2e2;color:#991b1b;">FAILED</span>'}
-        </td>
-        <td>
-          <button type="button" class="btn-small" style="background:#fee2e2; color:#991b1b;" onclick="removeUgeCourse(${c.id})">Remove</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function addCustomCourse() {
-  const codeInput = document.getElementById("custom-code");
-  const creditsInput = document.getElementById("custom-credits");
-  const g1Select = document.getElementById("custom-grade1");
-  const g2Select = document.getElementById("custom-grade2");
-  const errBox = document.getElementById("custom-error");
-
-  errBox.style.display = "none";
-  const result = courseManager.addCustomCourse(codeInput.value, creditsInput.value, g1Select.value, g2Select.value);
-
-  if (!result.success) {
-    errBox.textContent = result.error;
-    errBox.style.display = "block";
-    return;
-  }
-
-  codeInput.value = "";
-  g1Select.value = "A";
-  g2Select.value = "";
-  document.getElementById("custom-retake-group").style.display = "none";
-  if (document.getElementById("custom-g1-label")) document.getElementById("custom-g1-label").textContent = "Grade";
-
-  renderCustomCoursesTable();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function removeCustomCourse(id) {
-  courseManager.removeCustomCourse(id);
-  renderCustomCoursesTable();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function updateCustomCourseGrade(id, field, value) {
-  courseManager.updateCustomCourseGrade(id, field, value);
-  renderCustomCoursesTable();
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function updateCustomCourseCredits(id, credits) {
-  courseManager.updateCustomCourseCredits(id, credits);
-  if (document.getElementById("results-section").style.display === "block") {
-    evaluateRequirements(false);
-  }
-}
-
-function renderCustomCoursesTable() {
-  const tbody = document.getElementById("custom-courses-tbody");
-  if (!tbody) return;
-
-  if (courseManager.customCourses.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">No custom elective courses added.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = courseManager.customCourses.map(c => {
-    const passed = courseManager.isCustomCoursePassed(c);
-    const isFail1 = (c.grade1 === 'F' || c.grade1 === 'FF');
-    return `
-      <tr>
-        <td><strong>${c.code}</strong></td>
-        <td>
-          <input type="number" min="1" max="6" value="${c.credits}" style="width:55px; padding:0.2rem 0.4rem; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateCustomCourseCredits(${c.id}, this.value)">
-        </td>
-        <td>
-          <select onchange="updateCustomCourseGrade(${c.id}, 'grade1', this.value)">
-            ${GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade1 === g ? 'selected' : ''}>${g}</option>`).join('')}
-          </select>
-        </td>
-        <td>
-          ${isFail1 ? `
-            <select onchange="updateCustomCourseGrade(${c.id}, 'grade2', this.value)">
-              <option value="">--Select--</option>
-              ${GRADE_OPTIONS.map(g => `<option value="${g}" ${c.grade2 === g ? 'selected' : ''}>${g}</option>`).join('')}
-            </select>
-          ` : '<span style="color:#94a3b8;">N/A</span>'}
-        </td>
-        <td>
-          ${passed ? '<span class="status-badge status-fulfilled">PASSED</span>' : '<span class="status-badge status-pending" style="background:#fee2e2;color:#991b1b;">FAILED</span>'}
-        </td>
-        <td>
-          <button type="button" class="btn-small" style="background:#fee2e2; color:#991b1b;" onclick="removeCustomCourse(${c.id})">Remove</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
 // Utility options
-
 function toggleAllCategories(openState) {
   document.querySelectorAll('details.category-details').forEach(det => {
     det.open = openState;
@@ -941,42 +388,59 @@ function toggleAllCategories(openState) {
 }
 
 // --- Window Method Attachments for Inline Event Handlers ---
+// UI Renderer
 window.renderCheckboxes = renderCheckboxes;
 window.renderCollegeGeContent = renderCollegeGeContent;
-window.renderUgeCoursesTable = renderUgeCoursesTable;
-window.renderLangCoursesTable = renderLangCoursesTable;
-window.renderPhedCoursesTable = renderPhedCoursesTable;
-window.renderCustomCoursesTable = renderCustomCoursesTable;
 window.updateCategoryCounts = updateCategoryCounts;
 
+// Generic Handler
 window.onGrade1ChangeGeneric = onGrade1ChangeGeneric;
+
+// PHED Handler
 window.onGrade1ChangePhed = onGrade1ChangePhed;
+window.renderPhedAdderContainer = renderPhedAdderContainer;
 window.addPhedCourse = addPhedCourse;
 window.removePhedCourse = removePhedCourse;
 window.updatePhedCourseGrade = updatePhedCourseGrade;
+window.renderPhedCoursesTable = renderPhedCoursesTable;
+
+// Language course Handler
 window.addLangCourse = addLangCourse;
 window.removeLangCourse = removeLangCourse;
 window.updateLangCourseGrade = updateLangCourseGrade;
 window.updateLangCourseCredits = updateLangCourseCredits;
+window.renderLangCoursesTable = renderLangCoursesTable;
 window.onExemptionChange = onExemptionChange;
+
+// UGEX Handler
+window.addUgeCourse = addUgeCourse;
+window.removeUgeCourse = removeUgeCourse;
+window.updateUgeCourseGrade = updateUgeCourseGrade;
+window.updateUgeCourseCredits = updateUgeCourseCredits;
+window.renderUgeCoursesTable = renderUgeCoursesTable;
+
+// Custom course handler
+window.addCustomCourse = addCustomCourse;
+window.removeCustomCourse = removeCustomCourse;
+window.updateCustomCourseGrade = updateCustomCourseGrade;
+window.updateCustomCourseCredits = updateCustomCourseCredits;
+window.renderCustomCoursesTable = renderCustomCoursesTable;
+
+// Utility
 window.switchTab = switchTab;
 window.handleContainerClick = handleContainerClick;
 window.toggleItemCheck = toggleItemCheck;
 window.onGradeChange = onGradeChange;
 window.onStreamChange = onStreamChange;
 window.onCollegeChange = onCollegeChange;
-window.addUgeCourse = addUgeCourse;
-window.removeUgeCourse = removeUgeCourse;
-window.updateUgeCourseGrade = updateUgeCourseGrade;
-window.updateUgeCourseCredits = updateUgeCourseCredits;
-window.addCustomCourse = addCustomCourse;
-window.removeCustomCourse = removeCustomCourse;
-window.updateCustomCourseGrade = updateCustomCourseGrade;
-window.updateCustomCourseCredits = updateCustomCourseCredits;
 window.toggleAllCategories = toggleAllCategories;
+
+// Debug Tab
 window.toggleDevMode = toggleDevMode;
 window.loadJsonSettings = loadJsonSettings;
 window.resetAll = resetAll;
+
+// Report Tab
 window.evaluateRequirements = evaluateRequirements;
 
 // Initialization on DOM Load

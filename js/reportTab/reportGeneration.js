@@ -6,7 +6,12 @@ import { CourseManager } from '../classes/CourseManager.js';
 
 export function formatCode(code, label) {
   const displayText = label || code;
-  return courseManager.isCoursePassed(code) ? `<span class="highlight-taken">${displayText}</span>` : displayText;
+  
+  const isPassed = window.courseManager?.hasPassedCourse(code);
+
+  return isPassed 
+    ? `<span class="highlight-taken">${displayText}</span>` 
+    : displayText;
 }
 
 export function getCollegeGeReportText(college) {

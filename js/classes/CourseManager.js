@@ -21,23 +21,47 @@ export class CourseManager {
 
   // --- Grade & Pass Determination Helpers ---
 
-  isCustomCoursePassed(course) {
+	isGradePassed(grade1, grade2) {
+	  if (grade1 === 'PP') return true;
+	  if (grade1 && grade1 !== 'F' && grade1 !== 'FF') return true;
+	  if (grade2 === 'PP') return true;
+	  return !!(grade2 && grade2 !== 'F' && grade2 !== 'FF');
+	}
+
+	isCoursePassed(code) {
+	  const courseState = this.gridCourses[code];
+	  if (!courseState || !courseState.checked) return false;
+	  return this.isGradePassed(courseState.grade1, courseState.grade2);
+	}
+
+	isCustomCoursePassed(course) {
     if (!course) return false;
-    if (course.grade1 === 'PP') return true;
-    if (course.grade1 !== 'F' && course.grade1 !== 'FF') return true;
-    if (course.grade2 === 'PP') return true;
-    return !!(course.grade2 && course.grade2 !== 'F' && course.grade2 !== 'FF');
-  }
+	  return this.isGradePassed(course.grade1, course.grade2);
+	}
 
-  isCoursePassed(code) {
-    const courseState = this.gridCourses[code];
-    if (!courseState || !courseState.checked) return false;
+  hasPassedCourse(code) {
+    if (!code) return false;
 
-    const { grade1, grade2 } = courseState;
-    if (grade1 === 'PP') return true;
-    if (grade1 !== 'F' && grade1 !== 'FF') return true;
-    if (grade2 === 'PP') return true;
-    return !!(grade2 && grade2 !== 'F' && grade2 !== 'FF');
+    // 1. Check standard grid courses
+    if (this.isCoursePassed(code)) return true;
+
+    // 2. Check custom course collections (langCourses, ugeCourses, phedCourses, customCourses, etc.)
+    const customLists = [
+      this.langCourses,
+      this.ugeCourses,
+      this.phedCourses,
+      this.customCourses
+    ];
+
+    for (const list of customLists) {
+      if (!Array.isArray(list)) continue;
+      const match = list.find(c => c.code === code);
+      if (match && this.isCustomCoursePassed(match)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   getCourseCredits(code) {

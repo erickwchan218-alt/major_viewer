@@ -309,39 +309,71 @@ export const coursesData = {
 	]
 };
 
-export const streamDescriptions = {
-	ENRICH: `For students who specialize in Enrichment Stream[c]:
-
-	12-18 units from MATH3030, 3040, 3060, 3070, 3093,
-	MATH 3230, 3270, 3340,
-	MATH 4010, 4030, 4050, 4060, 4080, 4220,
-	MATH 5011, 5012, 5021, 5022, 5031, 5032, 5051, 5052, 5061, 5062, 5070;
-	and 0-3 units from MATH3240, 4280;
-	and 0-3 units from MATH3320, 4230`,
-
-	CAM: `For students who specialize in Computational and Applied Mathematics Stream:
-
-	CSCI1540# and MATH3230; and 9-12 units from MATH3093, 32xx, 33xx, 42xx, 43xx, in which 0-3 units may be chosen from IERG5124#, SEEM3550#/ESTR3506#, SEEM3570#/ESTR3508#`,
-
-	CBDA: `For students who specialize in Computational Big Data Analytics Stream:
-
-	9-12 units from MATH3320, 3330, 3340, 4280; and 3-9 units from MATH3215, 3230, 3280, 3290, 3310, 3360, 4230, 4240, in which 0-3 units may be chosen from IERG5124#, SEEM3550#/ESTR3506#, STAT4005#`,
-
-	MATH_STREAM: `For students in the Mathematics Stream:
-
-	MATH courses at 3000 or above level, and/or courses at 2000 or above level of one other subject area[d] offered by the Faculties/Departments of Science, Engineering, Economics and Finance, with at least 12 units of MATH courses at 3000 or above level.`,
-
-	MATH_EDU: `For students who specialize in Mathematics-Education Stream:
-
-	MATH and BMED courses at 3000 or above level, with at least 9 units of BMED courses.`,
-
-	MULTI: `For students who specialize in Mathematics-Multidisciplinary Stream:
-
-	MATH courses at 3000 or above level, and/or courses at 2000 or above level of at most two other subject areas[d] offered by the Faculties/Departments of Science, Engineering, Economics, and Finance, with at least 9 units of non-MATH courses. The specific subject area codes are given in explanatory note[e].`,
-
-	EMATH_CAM: `For students specializing in EMath + CAM (Enrichment + Computational Applied Math):
-
-	Must satisfy BOTH requirements:
-	(1) Enrichment Stream: 12-18 units from List A; 0-3 units from List B; 0-3 units from List C
-	(2) CAM Stream: CSCI1540 and MATH3230; plus 9-12 units from CAM electives`
-};
+export const streamData = [
+  {
+    key: 'ENRICH',
+    title: 'Enrichment Stream',
+    render: (formatCode) => `
+      <b>For students who specialize in <u>Enrichment Stream</u></b>[c]<b>:</b><br>
+      12-18 units from ${formatCode('MATH3030')}, ${formatCode('MATH3040', '3040')}, ${formatCode('MATH3060', '3060')}, ${formatCode('MATH3070', '3070')}, ${formatCode('MATH3093', '3093')},<br>
+      ${formatCode('MATH3230')}, ${formatCode('MATH3270', '3270')}, ${formatCode('MATH3340', '3340')},<br>
+      ${formatCode('MATH4010')}, ${formatCode('MATH4030', '4030')}, ${formatCode('MATH4050', '4050')}, ${formatCode('MATH4060', '4060')}, ${formatCode('MATH4080', '4080')}, ${formatCode('MATH4220', '4220')},<br>
+      ${formatCode('MATH5011')}, ${formatCode('MATH5012', '5012')}, ${formatCode('MATH5021', '5021')}, ${formatCode('MATH5022', '5022')}, ${formatCode('MATH5031', '5031')}, ${formatCode('MATH5032', '5032')}, ${formatCode('MATH5051', '5051')}, ${formatCode('MATH5052', '5052')}, ${formatCode('MATH5061', '5061')}, ${formatCode('MATH5062', '5062')}, ${formatCode('MATH5070', '5070')};<br>
+      and 0-3 units from ${formatCode('MATH3240')}, ${formatCode('MATH4280', '4280')};<br>
+      and 0-3 units from ${formatCode('MATH3320')}, ${formatCode('MATH4230', '4230')}
+    `
+  },
+  {
+    key: 'CAM',
+    title: 'Computational and Applied Mathematics Stream',
+    render: (formatCode) => `
+      <b>For students who specialize in <u>Computational and Applied Mathematics Stream</u>:</b><br>
+      ${formatCode('CSCI1540')}# and ${formatCode('MATH3230')}; <br>
+      and 9-12 units from ${formatCode('MATH3093')}, 32xx, 33xx, 42xx, 43xx, <br>
+      in which 0-3 units may be chosen from ${formatCode('IERG5124')}#, ${formatCode('SEEM3550')}#/${formatCode('ESTR3506')}#, ${formatCode('SEEM3570')}#/${formatCode('ESTR3508')}#
+    `
+  },
+  {
+    key: 'CBDA',
+    title: 'Computational Big Data Analytics Stream',
+    render: (formatCode) => `
+      <b>For students who specialize in <u>Computational Big Data Analytics Stream</u>:</b><br>
+      9-12 units from ${formatCode('MATH3320')}, ${formatCode('MATH3330', '3330')}, ${formatCode('MATH3340', '3340')}, ${formatCode('MATH4280', '4280')}; <br>
+      and 3-9 units from ${formatCode('MATH3215')}, ${formatCode('MATH3230', '3230')}, ${formatCode('MATH3280', '3280')}, ${formatCode('MATH3290', '3290')}, ${formatCode('MATH3310', '3310')}, ${formatCode('MATH3360', '3360')}, ${formatCode('MATH4230', '4230')}, ${formatCode('MATH4240', '4240')}, in which 0-3 units may be chosen from ${formatCode('IERG5124')}#, ${formatCode('SEEM3550')}#/${formatCode('ESTR3506')}#, ${formatCode('STAT4005')}#
+    `
+  },
+  {
+    key: 'MATH_STREAM',
+    title: 'Mathematics Stream',
+    render: () => `
+      <b>For students in the <u>Mathematics Stream</u>:</b><br>
+      MATH courses at 3000 or above level, and/or courses at 2000 or above level of one other subject area[d] offered by the Faculties/Departments of Science, Engineering, Economics and Finance, with at least 12 units of MATH courses at 3000 or above level.
+    `
+  },
+  {
+    key: 'MATH_EDU',
+    title: 'Mathematics-Education Stream',
+    render: () => `
+      <b>For students who specialize in <u>Mathematics-Education Stream</u>:</b><br>
+      MATH and BMED courses at 3000 or above level, with at least 9 units of BMED courses.
+    `
+  },
+  {
+    key: 'MULTI',
+    title: 'Mathematics-Multidisciplinary Stream',
+    render: () => `
+      <b>For students who specialize in <u>Mathematics-Multidisciplinary Stream</u>:</b><br>
+      MATH courses at 3000 or above level, and/or courses at 2000 or above level of at most two other subject areas[d] offered by the Faculties/Departments of Science, Engineering, Economics, and Finance, with at least 9 units of non-MATH courses. The specific subject area codes are given in explanatory note[e].
+    `
+  },
+  {
+    key: 'EMATH_CAM',
+    title: 'EMath + CAM Stream',
+    render: (formatCode) => `
+      <b>For students specializing in <u>EMath + CAM (Enrichment + Computational Applied Math)</u>:</b><br>
+      Must satisfy BOTH requirements:<br>
+      (1) Enrichment Stream: 12-18 units from List A; 0-3 units from List B; 0-3 units from List C<br>
+      (2) CAM Stream: ${formatCode('CSCI1540')} and ${formatCode('MATH3230')}; plus 9-12 units from CAM electives
+    `
+  }
+];

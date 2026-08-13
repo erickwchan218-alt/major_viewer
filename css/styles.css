@@ -495,24 +495,52 @@ th {
   color: var(--warning);
 }
 
-.requirement-text {
-  font-family: inherit;
-  white-space: pre-wrap;
-  background: #f8fafc;
+.requirement-text, 
+#highlighted-text {
+  font-family: 'Times New Roman', Times, serif;
+  white-space: normal;
+  background: #ffffff;
+  max-width: 820px;       /* Restricts width to mirror standard page margins */
+  margin: 0 auto;
   padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 0.95rem;
-  line-height: 1.8;
+  color: #000000;
+  line-height: 1.35;
+  font-size: 1rem;
+  border: none;           /* Removes default background card border */
+}
+
+.doc-outer-box {
+  border: 1px solid #000000 !important;
+  padding: 2rem 2.2rem;
+  background: #ffffff;
+  margin-top: 1rem;
+}
+
+/* Remove ALL internal horizontal lines & borders */
+#highlighted-text table,
+#highlighted-text tr,
+#highlighted-text td,
+#highlighted-text th {
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* Adjust cell padding & top alignment */
+#highlighted-text td {
+  padding: 2px 0;
+  vertical-align: top !important;
+  line-height: 1.35;
 }
 
 .highlight-taken {
-  background-color: #86efac;
+  background-color: var(--success-bg);
   color: #064e3b;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid #4ade80;
+  display: inline-block;
 }
 
 .overall-summary {
@@ -593,3 +621,53 @@ th {
   font-size: 0.85rem;
 }
 
+/* ==========================================================================
+   Microsoft Word HTML & Requirement Table Overrides
+   ========================================================================== */
+
+.requirement-text table,
+.card table {
+  width: 100% !important;
+  max-width: 100%;
+  border-collapse: collapse !important;
+  margin: 1rem 0;
+  font-family: inherit;
+}
+
+.requirement-text td,
+.requirement-text th {
+  width: auto !important;
+  height: auto !important;
+  padding: 2px 0;      /* Reduced vertical padding to prevent large gaps between rows */
+  font-size: 1.05rem;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.requirement-text table[border="1"],
+.requirement-text table.MsoNormalTable {
+  border: 1px solid var(--border) !important;
+}
+
+.requirement-text table[border="1"] td,
+.requirement-text table[border="1"] th {
+  border: 1px solid var(--border) !important;
+}
+
+.requirement-text p.MsoNormal,
+.requirement-text p {
+  margin: 0 !important;
+  line-height: 1.25 !important;
+  font-size: inherit !important;
+  font-family: 'Times New Roman', Times, serif !important;
+}
+
+.requirement-text td[align="center"],
+.requirement-text .text-center {
+  text-align: center !important;
+}
+
+.requirement-text td[align="right"],
+.requirement-text .text-right {
+  text-align: right !important;
+}
