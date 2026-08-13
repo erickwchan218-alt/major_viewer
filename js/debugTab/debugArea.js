@@ -53,20 +53,34 @@ function applyImportedData(data) {
 
 export function loadJsonSettings() {
     const textarea = document.getElementById("json-debug-textarea");
+
     if (!textarea || !textarea.value.trim()) {
         alert("Please paste or generate a valid JSON configuration in the text area.");
         return;
     }
 
+    let data;
+
     try {
-        const data = JSON.parse(textarea.value);
+        data = JSON.parse(textarea.value);
+    } catch (parseError) {
+        console.error("JSON Syntax Error:", parseError);
+        alert(`Invalid JSON format:\n${parseError.message}`);
+        return;
+    }
+
+    try {
         applyImportedData(data);
-    } catch (e) {
-        alert("Error loading JSON settings: " + e.message);
+    } catch (runtimeError) {
+        console.error("Runtime error inside applyImportedData():", runtimeError);
+
+        alert(
+            `Error executing settings:\n[${runtimeError.name}] ${runtimeError.message}\n\n` +
+            `Open Browser Console (F12) to see the exact line number & stack trace...`
+        );
     }
 }
 
-// Loads data.json directly from the root directory
 export async function loadDataJson() {
     try {
         const response = await fetch('./data.json');
