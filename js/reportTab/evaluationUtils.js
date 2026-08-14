@@ -192,8 +192,6 @@ export function evaluateGeneralEducation(courseManager, college) {
     };
 }
 
-// js/reportTab/evaluationUtils.js
-
 export function evaluateLanguages(courseManager) {
     // -------------------------------------------------------------
     // (a) Chinese Language (CHLT) - Standard 3 Units
